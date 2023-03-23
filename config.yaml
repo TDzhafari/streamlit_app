@@ -1,0 +1,18 @@
+credentials:
+  usernames:
+    tdzhafari:
+      email: tdzhafari@commercialcreditgroup.com
+      name: Timur Dzhafari
+      password: $2b$12$bMO/ndThta8dPb6/QD1oeOCY/qeAaDNkUyZOyUs5B54TZLw0z1uJ.
+    jdoe:
+      email: jdoe@commercialcreditgroup.com
+      name: Jane Doe
+      password: $2b$12$pBkrxaneuakLBsc3LC1u2e6x0C7Ut5vfnlmtSZItQ9pZLp7GVqEYO
+cookie:
+  expiry_days: 30
+  key: authorization_cookie_key
+  name: authorization_cookie
+preauthorized:
+  emails:
+  - rlinkier@commercialcreditgroup.com
+  - tdzhafari@gmail.com
