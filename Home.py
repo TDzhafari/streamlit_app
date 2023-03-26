@@ -6,6 +6,8 @@ import pandas as pd
 import io
 import openpyxl
 import gdown
+import os
+import pathlib
 import requests
 import openpyxl
 import altair as alt
@@ -38,7 +40,8 @@ st.set_page_config(layout="wide")
 
 user_groups = {"admin": ["tdzhafari"], "group1": ["jdoe"]}
 
-with open(r"D:\School\UNCC\projects\repos\streamlit_app\config.yaml") as file:
+config_path: pathlib.Path = pathlib.Path(os.getcwd(), "config.yaml")
+with open(config_path, "r") as file:
     config = yaml.load(file, Loader=SafeLoader)
 
 authenticator = stauth.Authenticate(
@@ -89,22 +92,26 @@ if authentication_status:
 @st.cache_data
 def fetch_and_clean_data():
     # URL of the raw CSV file on GitHub
-    url = (
-        "https://raw.githubusercontent.com/{username}/{repository}/{branch}/{file_name}"
+    disaster_data_path = pathlib.Path(
+        os.getcwd(), "2000-2023 disaster around the world.xlsx"
     )
-    # Update the variables with your specific GitHub repository and file details
-    username = "TimurDzh"
-    repository = "streamlit_demo"
-    branch = "main"  # Or any other branch you want to use
-    file_name = "2000-2023 disaster around the world.xlsx"  # Replace with the name of your CSV file
-    # Download the CSV file from GitHub
-    response = requests.get(
-        url.format(
-            username=username, repository=repository, branch=branch, file_name=file_name
-        )
-    )
+    # url = (
+    #     "https://raw.githubusercontent.com/{username}/{repository}/{branch}/{file_name}"
+    # )
+    # # Update the variables with your specific GitHub repository and file details
+    # username = "TimurDzh"
+    # repository = "streamlit_demo"
+    # branch = "main"  # Or any other branch you want to use
+    # file_name = "2000-2023 disaster around the world.xlsx"  # Replace with the name of your CSV file
+    # # Download the CSV file from GitHub
+    # response = requests.get(
+    #     url.format(
+    #         username=username, repository=repository, branch=branch, file_name=file_name
+    #     )
+    # )
     # Read the CSV data into a Pandas DataFrame
-    df = pd.read_excel(io.BytesIO(response.content), header=6)
+    # df = pd.read_excel(io.BytesIO(response.content), header=6)
+    df = pd.read_excel(disaster_data_path, header=6, engine="openpyxl")
     df["Total Damages $$$"] = df["Total Damages, Adjusted ('000 US$)"]
     return df
 
