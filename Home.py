@@ -5,8 +5,12 @@ import io
 import pandas as pd
 import io
 import openpyxl
-import gdown
 import os
+import geopandas as gpd
+
+# import altair_saver
+import pyarrow as pa
+import pyarrow.feather as feather
 import pathlib
 import requests
 import openpyxl
@@ -89,37 +93,39 @@ if authentication_status:
 ################################################################################################
 # A separate function to retrieve data from github
 ################################################################################################
+
+
 @st.cache_data
 def fetch_and_clean_data():
     # URL of the raw CSV file on GitHub
     disaster_data_path = pathlib.Path(
         os.getcwd(), "2000-2023 disaster around the world.xlsx"
     )
-    # url = (
-    #     "https://raw.githubusercontent.com/{username}/{repository}/{branch}/{file_name}"
-    # )
-    # # Update the variables with your specific GitHub repository and file details
-    # username = "TimurDzh"
-    # repository = "streamlit_demo"
-    # branch = "main"  # Or any other branch you want to use
-    # file_name = "2000-2023 disaster around the world.xlsx"  # Replace with the name of your CSV file
-    # # Download the CSV file from GitHub
-    # response = requests.get(
-    #     url.format(
-    #         username=username, repository=repository, branch=branch, file_name=file_name
-    #     )
-    # )
-    # Read the CSV data into a Pandas DataFrame
-    # df = pd.read_excel(io.BytesIO(response.content), header=6)
     df = pd.read_excel(disaster_data_path, header=6, engine="openpyxl")
     df["Total Damages $$$"] = df["Total Damages, Adjusted ('000 US$)"]
-    return df
+
+    # Download GeoJSON file of world map
+    world_map_url = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json"
+    world_map = alt.topo_feature(world_map_url, "countries")
+
+    # Aggregate the data by country and region
+    df_m = df.groupby(["Country", "Region"]).sum().reset_index()
+
+    # Join the data with the GeoJSON file based on the "Country" field
+    world_data = gpd.read_file(world_map_url)
+    # df_map = world_data.merge(df_m, left_on='name', right_on='Country')
+
+    merged_data = world_data.merge(df_m, left_on="name", right_on="Country")
+
+    # Convert geopandas dataframe to pandas dataframe
+    merged_data = pd.DataFrame(merged_data)
+
+    return df, merged_data, world_map
 
 
 ################################################################################################
 # Interactive dashboards and additional functionality
 ################################################################################################
-
 
 if authentication_status:
     # disease = st.selectbox('select a disease', set(my_df['Dim2']))
@@ -128,13 +134,17 @@ if authentication_status:
     # else:
     #    AgGrid(my_df[my_df['Dim2'] == disease])
     if username in user_groups.get("admin"):
-        tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        source, line_plot, box_plot, map, tab5 = st.tabs(
             ["Source", "Line Plot", "Box Plot", "Map", "Placeholder"]
         )
     else:
-        tab1, tab2, tab3 = st.tabs(["Source", "Line Plot", "Box Plot"])
-    with tab1:
-        df = fetch_and_clean_data()
+        source, line_plot, box_plot = st.tabs(["Source", "Line Plot", "Box Plot"])
+    with source:
+        expander = st.expander("How this works?")
+        expander.write(
+            "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
+        )
+        df, merged_data, world_map = fetch_and_clean_data()
         gb = GridOptionsBuilder.from_dataframe(df)
         # gb.configure_pagination(paginationAutoPageSize = True)
         gb.configure_side_bar()
@@ -157,7 +167,16 @@ if authentication_status:
             width="100%",
             reload_data=True,
         )
-    with tab2:
+
+    ################################################################################################
+    # Line plot tab
+    ################################################################################################
+
+    with line_plot:
+        expander = st.expander("How this works?")
+        expander.write(
+            "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
+        )
         col1, col2 = st.columns(2)
         with col1:
             d_type = st.multiselect("select a disaster type", set(df["Disaster Type"]))
@@ -165,13 +184,9 @@ if authentication_status:
         with col2:
             country = st.selectbox("select a country", set(df["Country"]))
             st.write(f"you chose {country}")
-        # with col3:
-        #     region = st.selectbox("select a region", set(df["Region"]))
-        #     st.write(f"you chose {region}")
-        if st.button("Remove all filters"):
+        if st.button("Remove filters"):
             d_type = None
             country = None
-            # region = None
         if d_type and country:
             df1 = df[(df["Country"] == country) & df["Disaster Type"].isin(d_type)]
             st.line_chart(
@@ -179,17 +194,104 @@ if authentication_status:
                 x="Year",
                 y="Total Affected",
             )
-    with tab3:
+
+    ################################################################################################
+    # Box plot
+    ################################################################################################
+
+    with box_plot:
+        expander = st.expander("How this works?")
+        expander.write(
+            "Please choose a year to see which countries had the highest disaster related mortality for the year. Please note that if you hower over bars in the barplot you will see some useful information in the tooltip that will appear."
+        )
+        col1, col2 = st.columns(2)
         year = st.slider("Please choose a year", 2000, 2023, 2010)
         df2 = df[df["Year"] == year]
-        c = alt.Chart(df2).mark_bar().encode(y="Total Deaths", x="Region")
+        # c = alt.Chart(df2.sort_values(by=['Total Deaths'], ascending = False)).mark_bar().encode(y = alt.Y("Region:N", sort = alt.EncodingSortField(field='Region', op = 'sum', order = 'ascending')), x = alt.X("Total Deaths", sort = '-x'))
+        c = (
+            alt.Chart(df2.sort_values(by=["Total Deaths"], ascending=False))
+            .mark_bar()
+            .encode(
+                y=alt.Y(
+                    "Region:N",
+                    sort=alt.EncodingSortField(
+                        field="Total Deaths", order="descending"
+                    ),
+                    axis=alt.Axis(title="Region"),
+                ),
+                x=alt.X("Total Deaths", sort="-x", axis=alt.Axis(title="Total Deaths")),
+                tooltip=[
+                    alt.Tooltip("Country:N", title="Country"),
+                    alt.Tooltip("Total Deaths:Q", title="Total Deaths"),
+                    alt.Tooltip("Total Affected:Q", title="Total Affected"),
+                ],
+            )
+        )
         st.altair_chart(c, use_container_width=True)
     if username in user_groups.get("admin"):
-        with tab4:
-            st.write("Map coming soon. Meanwhile please feel free to check out my")
+
+        ################################################################################################
+        # Map
+        ################################################################################################
+
+        with map:
+            year_map = st.slider("Please choose a year:", 2000, 2023, 2010)
+
+            ## Convert pandas dataframe to Arrow table
+            # table = pa.Table.from_pandas(merged_data)
+
+            ## Write Arrow table to Feather format
+            # feather.write_feather(table, 'merged_data.feather')
+
+            ## Read Feather file into Arrow table
+            # table = feather.read_feather('merged_data.feather')
+
+            ## Convert Arrow table to pandas dataframe
+            # merged_data = table.to_pandas()
+
+            ## Create a heatmap with a tooltip
+            # heatmap = alt.Chart(merged_data).mark_geoshape().encode(
+            #    color=alt.Color('Total Deaths:Q', scale=alt.Scale(scheme='reds')),
+            #    #tooltip=[
+            #    #    alt.Tooltip('name:N', title='Country'),
+            #    #    alt.Tooltip('Total Deaths:Q', title='Total Deaths', format=',')
+            #    #]
+            # ).properties(
+            #    width=600,
+            #    height=400,
+            #    title='Total Deaths by Country'
+            # )
+
+            ## Add world map outlines
+            # world_outline = alt.Chart(world_map).mark_geoshape(stroke='white', strokeWidth=0.5).encode(
+            #    color=alt.value('transparent')
+            # ).properties(
+            #    width=600,
+            #    height=400,
+            # )
+
+            ## Combine the heatmap and world map outlines
+            # map_chart = world_outline + heatmap
+
+            ## Display the chart in Streamlit
+
+            # countries = alt.topo_feature(df2, "Country")
+            # source = df2[(df2['Year'] == year)]
+
+            # base = alt.Chart(source).mark_geoshape(
+            #    fill='#666666',
+            #    stroke='white'
+            # ).properties(
+            #    width=300,
+            #    height=180
+            # )
+
+            # projections = 'orthographic'
+            # st.altair_chart(base.projections.properties(title = projections))
+
         with tab5:
             st.write(
-                "There will be something cool and creative below. Meanwhile check out some art by Edward Hopper."
+                "There will be something cool and creative below. Meanwhile enjoy some art by Edward Hopper."
             )
             col1, col2 = st.columns(2)
             with col1:
