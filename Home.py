@@ -1,9 +1,7 @@
-from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
+from st_aggrid import GridOptionsBuilder, AgGrid
 from yaml.loader import SafeLoader
 import yaml
 import pandas as pd
-import io
-import openpyxl
 import os
 import geopandas as gpd
 import matplotlib.pyplot as plt
@@ -23,7 +21,6 @@ from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
 import pandas as pd
 from nltkmodules import *
-
 import altair as alt
 
 # import wordcloud
@@ -444,7 +441,6 @@ elif demo_type_name == "NLP":
     tab1, tab2, tab3 = st.tabs(["Word Cloud", "Bar Chart", "View Text"])
 
     with tab1:
-        st.write("This is my first tab")
 
         # Define some text for the word cloud
         if image != " " and tokens:
