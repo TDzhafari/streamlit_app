@@ -8,8 +8,11 @@ import openpyxl
 import os
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import streamlit as st
+from wordcloud import WordCloud
 
 # import altair_saver
+from collections import Counter
 import pyarrow as pa
 import pyarrow.feather as feather
 import pathlib
@@ -21,12 +24,13 @@ import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
 import pandas as pd
+import nltkmodules
 
 import altair as alt
 
 # import wordcloud
 from wordcloud import WordCloud, STOPWORDS
-import glob, nltk, os, re
+import nltk, os
 from nltk.corpus import stopwords
 
 # https://towardsdatascience.com/how-to-add-a-user-authentication-service-in-streamlit-a8b93bf02031
@@ -49,7 +53,6 @@ from nltk.corpus import stopwords
 ################################################################################################
 # Authentication and initial page setup
 ################################################################################################
-nltk.download("stopwords")
 
 st.set_page_config(layout="wide")
 
@@ -388,7 +391,8 @@ elif demo_type_name == "NLP":
     image = st.selectbox("Choose a text file", books.keys())
 
     ## Get the value
-    image = books.get(image)
+    if image != " ":
+        image = books.get(image)
 
     if image != " ":
         stop_words = []
@@ -436,54 +440,63 @@ elif demo_type_name == "NLP":
             for item in tokens:
                 if item in stop_words:
                     tokens.remove(item)
+    else:
+        tokens = " "
 
     tab1, tab2, tab3 = st.tabs(["Word Cloud", "Bar Chart", "View Text"])
 
     with tab1:
         st.write("This is my first tab")
-        import streamlit as st
-        from wordcloud import WordCloud
 
         # Define some text for the word cloud
-        text = " ".join(tokens)
+        if image != " " and tokens:
+            text = " ".join(tokens)
 
-        # Generate the word cloud image
-        wordcloud = WordCloud(
-            width=img_width, height=400, max_words=max_word, background_color="white"
-        ).generate(text)
+            # Generate the word cloud image
+            wordcloud = WordCloud(
+                width=img_width,
+                height=400,
+                max_words=max_word,
+                background_color="white",
+            ).generate(text)
 
-        # Display the word cloud image using Matplotlib
-        fig, ax = plt.subplots()
-        ax.imshow(wordcloud, interpolation="bilinear")
-        ax.axis("off")
-        st.pyplot(fig)
+            # Display the word cloud image using Matplotlib
+            fig, ax = plt.subplots()
+            ax.imshow(wordcloud, interpolation="bilinear")
+            ax.axis("off")
+            st.pyplot(fig)
 
     with tab2:
-        st.write("This is my second tab")
 
         # simple for loop to remove stop words
-        if remove_stop_words:
+        if remove_stop_words and tokens != " ":
             for item in tokens:
                 if item in stop_words:
                     tokens.remove(item)
         # create a dictionary using gensim library
-        st.text(tokens)
-        dictionary_TD = corpora.Dictionary(tokens)
-        # tokenize the terms using the dictionary
-        term_maps_TD = dictionary_TD.token2id
-        bow_corpus = [dictionary_TD.doc2bow(words) for words in words_list]
-        st.text(term_maps_TD)
+        if tokens != " ":
 
-        # look into the outputs
-        # term_maps_TD.items()
-        # type(term_maps_TD)
-        # corpus_TD
+            word_counts = Counter(tokens)
 
-        # swap values and keys in the dictionary
-        term_maps_TD = {v: k for k, v in term_maps_TD.items()}
-        # term_maps_TD
+            # Convert the Counter object to a dictionary
+            word_counts_dict = dict(word_counts)
 
-        dictionary_TD = corpora.Dictionary(corpus_TD)
+            # Create a DataFrame from the dictionary
+            df = pd.DataFrame.from_dict(
+                {
+                    "word": list(word_counts_dict.keys()),
+                    "count": list(word_counts_dict.values()),
+                }
+            )
+
+            df = df[(df["count"] > min_word_cnt)]
+
+            chart = (
+                alt.Chart(df).mark_bar().encode(x="count", y=alt.Y("word", sort="-x"))
+            )
+
+            # Display the chart in Streamlit using Altair
+            st.altair_chart(chart, use_container_width=True)
 
     with tab3:
         if image != " ":
