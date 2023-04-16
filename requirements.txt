@@ -18,6 +18,7 @@ beautifulsoup4==4.11.1
 bleach==5.0.1
 blinker==1.5
 blis==0.7.9
+bs4==0.0.1
 cachetools==5.2.0
 catalogue==2.0.8
 certifi==2022.9.24
@@ -25,6 +26,8 @@ cffi==1.15.1
 cfgv==3.3.1
 charset-normalizer==2.1.1
 click==8.1.3
+click-plugins==1.1.1
+cligj==0.7.2
 cmake==3.25.0
 colorama==0.4.6
 comm==0.1.2
@@ -38,6 +41,7 @@ debugpy==1.6.4
 decorator==5.1.1
 defusedxml==0.7.1
 dill==0.3.6
+diskcache==5.4.0
 distlib==0.3.6
 docopt==0.6.2
 entrypoints==0.4
@@ -51,6 +55,7 @@ fastdownload==0.0.7
 fastjsonschema==2.16.2
 fastprogress==1.0.3
 filelock==3.8.0
+Fiona==1.9.2
 flatbuffers==22.11.23
 fonttools==4.38.0
 fqdn==1.5.1
@@ -58,15 +63,15 @@ frozenlist==1.3.3
 fsspec==2022.11.0
 future==0.18.3
 gast==0.4.0
-wordcloud==1.8.2.2
-geopandas==0.12.2
 gdown==4.7.1
-nltk==3.7
+gensim==4.3.1
+geopandas==0.12.2
 gitdb==4.0.9
 GitPython==3.1.29
 google-auth==2.14.1
 google-auth-oauthlib==0.4.6
 google-pasta==0.2.0
+gpd==1.1.1
 graphviz==0.20.1
 grpcio==1.50.0
 h11==0.14.0
@@ -100,6 +105,7 @@ kiwisolver==1.4.4
 kneed==0.8.1
 langcodes==3.3.0
 libclang==14.0.6
+loguru==0.6.0
 lxml==4.9.1
 Markdown==3.4.1
 MarkupSafe==2.1.1
@@ -108,6 +114,7 @@ matplotlib-inline==0.1.6
 mistune==2.0.4
 multidict==6.0.4
 multiprocess==0.70.14
+munch==2.5.0
 murmurhash==1.0.9
 nbclassic==0.4.8
 nbclient==0.7.2
@@ -155,6 +162,7 @@ PyMySQL==1.0.2
 pyodbc==4.0.34
 pyparsing==3.0.9
 PyPDF2==3.0.1
+pyproj==3.4.1
 pyrsistent==0.19.2
 PySocks==1.7.1
 pytesseract==0.3.10
@@ -165,6 +173,8 @@ python-json-logger==2.0.4
 pytz==2022.4
 pytz-deprecation-shim==0.1.0.post0
 PyWavelets==1.4.1
+pywin32==305
+pywinpty==2.0.9
 PyYAML==6.0
 pyzmq==24.0.1
 regex==2022.10.31
@@ -181,6 +191,7 @@ scipy==1.9.3
 semver==2.13.0
 Send2Trash==1.8.0
 sentencepiece==0.1.97
+shapely==2.0.1
 six==1.16.0
 sklearn==0.0.post1
 smart-open==6.3.0
@@ -196,9 +207,14 @@ statsmodels==0.13.5
 streamlit==1.20.0
 streamlit-aggrid==0.3.4.post3
 streamlit-authenticator==0.2.1
+tabulate==0.8.10
 tensorboard==2.11.0
 tensorboard-data-server==0.6.1
 tensorboard-plugin-wit==1.8.1
+tensorflow==2.11.0
+tensorflow-estimator==2.11.0
+tensorflow-intel==2.11.0
+tensorflow-io-gcs-filesystem==0.28.0
 termcolor==2.1.1
 terminado==0.17.1
 thinc==8.1.6
@@ -234,6 +250,8 @@ websocket-client==1.4.2
 websockets==10.4
 Werkzeug==2.2.2
 widgetsnbextension==3.6.1
+win32-setctime==1.1.0
+wordcloud==1.8.2.2
 wrapt==1.14.1
 xxhash==3.1.0
 yarg==0.1.9
