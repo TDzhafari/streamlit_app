@@ -126,6 +126,7 @@ nodeenv==1.7.0
 notebook==6.5.2
 notebook_shim==0.2.2
 numpy==1.23.3
+nltk==3.5
 oauthlib==3.2.2
 opencv-python==4.7.0.68
 openpyxl==3.1.2
