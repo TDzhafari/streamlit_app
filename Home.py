@@ -1,7 +1,6 @@
 from st_aggrid import GridOptionsBuilder, AgGrid, GridUpdateMode, DataReturnMode
 from yaml.loader import SafeLoader
 import yaml
-import io
 import pandas as pd
 import io
 import openpyxl
@@ -16,7 +15,6 @@ from collections import Counter
 import pyarrow as pa
 import pyarrow.feather as feather
 import pathlib
-import requests
 import openpyxl
 import altair as alt
 from gensim import corpora
@@ -24,7 +22,7 @@ import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
 import pandas as pd
-import nltkmodules
+from nltkmodules import *
 
 import altair as alt
 
