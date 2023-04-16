@@ -1,4 +1,4 @@
-from st_aggrid import GridOptionsBuilder, AgGrid
+from st_aggrid import GridOptionsBuilder
 from yaml.loader import SafeLoader
 import yaml
 import pandas as pd
