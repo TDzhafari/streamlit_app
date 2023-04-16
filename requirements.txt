@@ -3,7 +3,6 @@ appdirs==1.4.4
 attrs==22.2.0
 backports.zoneinfo==0.2.1
 bcrypt==4.0.1
-beautifulsoup4 @ file:///home/conda/feedstock_root/build_artifacts/beautifulsoup4_1679322162244/work
 black @ file:///C:/ci/black_1660239986553/work
 blinker==1.5
 Bottleneck @ file:///C:/Windows/Temp/abs_3198ca53-903d-42fd-87b4-03e6d03a8381yfwsuve8/croots/recipe/bottleneck_1657175565403/work
