@@ -206,10 +206,6 @@ streamlit-aggrid==0.3.4.post3
 streamlit-authenticator==0.2.1
 tabulate==0.8.10
 tensorboard==2.11.0
-tensorboard-data-server==0.6.1
-tensorflow-intel==2.11.0
-tensorflow-io-gcs-filesystem==0.28.0
-termcolor==2.1.1
 terminado==0.17.1
 thinc==8.1.6
 threadpoolctl==3.1.0
