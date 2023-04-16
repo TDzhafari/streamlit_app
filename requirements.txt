@@ -145,7 +145,6 @@ pre-commit==2.20.0
 preshed==3.0.8
 prometheus-client==0.15.0
 prompt-toolkit==3.0.32
-protobuf==3.19.6
 psutil==5.9.4
 pure-eval==0.2.2
 pyarrow==10.0.0
