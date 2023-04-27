@@ -135,7 +135,7 @@ if authentication_status == True or authorization_demo is False:
         def fetch_and_clean_data():
             # URL of the raw CSV file on GitHub
             disaster_data_path = pathlib.Path(
-                os.getcwd(), "/data/2000-2023 disaster around the world.xlsx"
+                os.getcwd(), "data/2000-2023 disaster around the world.xlsx"
             )
             df = pd.read_excel(disaster_data_path, header=6, engine="openpyxl")
             df["Total Damages $$$"] = df["Total Damages, Adjusted ('000 US$)"]
