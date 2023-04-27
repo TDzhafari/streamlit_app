@@ -16,12 +16,14 @@ import pathlib
 import openpyxl
 import altair as alt
 from gensim import corpora
+from geopy.geocoders import Nominatim
 import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
 import pandas as pd
 from nltkmodules import *
 import altair as alt
+import folium
 
 # import wordcloud
 from wordcloud import WordCloud, STOPWORDS
@@ -51,58 +53,72 @@ from nltk.corpus import stopwords
 
 st.set_page_config(layout="wide")
 
+authorization_demo = False
+authentication_status = False
+username = ""
+
+with st.sidebar:
+    authorization_demo = st.checkbox(
+        label="Authentication demo",
+        help="If unchecked full access is granted.",
+    )
+
 user_groups = {"admin": ["tdzhafari"], "group1": ["jdoe"]}
 
-config_path: pathlib.Path = pathlib.Path(os.getcwd(), "config.yaml")
-with open(config_path, "r") as file:
-    config = yaml.load(file, Loader=SafeLoader)
+if authorization_demo is True:
+    config_path: pathlib.Path = pathlib.Path(os.getcwd(), "config.yaml")
+    with open(config_path, "r") as file:
+        config = yaml.load(file, Loader=SafeLoader)
 
-authenticator = stauth.Authenticate(
-    config["credentials"],
-    config["cookie"]["name"],
-    config["cookie"]["key"],
-    config["cookie"]["expiry_days"],
-)
-
-
-# Check if 'key' already exists in session_state
-# If not, then initialize it
-if "key" not in st.session_state:
-    st.session_state["key"] = "value"
-
-name, authentication_status, username = authenticator.login("login", "main")
-
-if authentication_status:
-    authenticator.logout("Logout", "sidebar")
-    st.write(f"Welcome *{name}* :wave:")
-
-elif authentication_status is False:
-    st.error("Username/password is incorrect")
-elif authentication_status is None:
-    st.warning("Please enter your username and password")
-    st.write(
-        "Here will be a button to register. Feel free to use below credentials for now:"
+    authenticator = stauth.Authenticate(
+        config["credentials"],
+        config["cookie"]["name"],
+        config["cookie"]["key"],
+        config["cookie"]["expiry_days"],
     )
-    expander = st.expander("For guest access credentials please click here")
-    expander.write("login: jdoe, password: abc1")
-# st.write(f'Your authentication status is {authentication_status}')
 
-if authentication_status:
-    with st.sidebar:
-        if st.button("Reset Password"):
-            try:
-                if authenticator.reset_password(username, "Reset password"):
-                    st.success("Password modified successfully")
-            except Exception as e:
-                st.error(e)
+    # Check if 'key' already exists in session_state
+    # If not, then initialize it
+    if "key" not in st.session_state:
+        st.session_state["key"] = "value"
 
+    name, authentication_status, username = authenticator.login("login", "main")
+
+    if authentication_status:
+        authenticator.logout("Logout", "sidebar")
+        st.write(f"Welcome *{name}* :wave:")
+
+    elif authentication_status is False:
+        st.error("Username/password is incorrect")
+    elif authentication_status is None:
+        st.warning("Please enter your username and password")
+        # st.write(
+        #     "Here will be a button to register. Feel free to use below credentials for now:"
+        # )
+        promise = st.checkbox(label="I promise, I can keep a secret!")
+        if promise:
+            expander = st.expander("For guest access credentials please click here.")
+            expander.write("login: 'jdoe', password: 'abc1' - just don't tell anyone")
+    # st.write(f'Your authentication status is {authentication_status}')
+
+    if authentication_status:
+        with st.sidebar:
+            if st.button("Reset Password"):
+                try:
+                    if authenticator.reset_password(username, "Reset password"):
+                        st.success("Password modified successfully")
+                except Exception as e:
+                    st.error(e)
+
+# else:
+#     authorization_demo = st.checkbox(label="Authentication demo")
 st.sidebar.empty()
 
-if authentication_status:
-    demo_type_name = st.sidebar.radio(
+if authentication_status == True or authorization_demo is False:
+    demo_type_name = st.sidebar.selectbox(
         label="Choose a demo",
         options=["Disasters", "NLP"],
-        horizontal=True,
+        # horizontal=True,
         help="Please choose between the available demos",
     )
 
@@ -120,7 +136,7 @@ if authentication_status:
         def fetch_and_clean_data():
             # URL of the raw CSV file on GitHub
             disaster_data_path = pathlib.Path(
-                os.getcwd(), "2000-2023 disaster around the world.xlsx"
+                os.getcwd(), "/data/2000-2023 disaster around the world.xlsx"
             )
             df = pd.read_excel(disaster_data_path, header=6, engine="openpyxl")
             df["Total Damages $$$"] = df["Total Damages, Adjusted ('000 US$)"]
@@ -147,13 +163,13 @@ if authentication_status:
         # Interactive dashboards and additional functionality
         ################################################################################################
 
-        if authentication_status:
+        if authentication_status or authorization_demo is False:
             # disease = st.selectbox('select a disease', set(my_df['Dim2']))
             # if not disease:
             #    AgGrid(my_df)
             # else:
             #    AgGrid(my_df[my_df['Dim2'] == disease])
-            if username in user_groups.get("admin"):
+            if username in user_groups.get("admin") or authorization_demo is False:
                 source, line_plot, box_plot, map, tab5 = st.tabs(
                     ["Source", "Line Plot", "Box Plot", "Map", "Placeholder"]
                 )
@@ -162,10 +178,10 @@ if authentication_status:
                     ["Source", "Line Plot", "Box Plot"]
                 )
             with source:
-                expander = st.expander("How this works?")
-                expander.write(
-                    "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
-                )
+                # expander = st.expander("How this works?")
+                # expander.write(
+                #     "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
+                # )
                 df, merged_data, world_map = fetch_and_clean_data()
                 gb = GridOptionsBuilder.from_dataframe(df)
                 # gb.configure_pagination(paginationAutoPageSize = True)
@@ -195,19 +211,35 @@ if authentication_status:
             ################################################################################################
 
             with line_plot:
-                expander = st.expander("How this works?")
-                expander.write(
-                    "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
-                )
+                # expander = st.expander("How this works?")
+                # expander.write(
+                #     "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
+                # )
                 col1, col2 = st.columns(2)
                 with col1:
+
+                    # d_type = ''
+                    # country = ''
+
+                    # # default filters
+                    # if d_type == "":
+                    #     d_type = "Earthquake"
+                    # if country == "":
+                    #     country = "Turkey"
+
                     d_type = st.multiselect(
-                        "select a disaster type", set(df["Disaster Type"])
+                        "select a disaster type",
+                        list(set(df["Disaster Type"])),
+                        default="Earthquake",
                     )
-                    st.write(f"you chose {d_type}")
+                    st.write(f"You have chosen {d_type}")
                 with col2:
-                    country = st.selectbox("select a country", set(df["Country"]))
-                    st.write(f"you chose {country}")
+                    country = st.selectbox(
+                        "select a country",
+                        list(set(df["Country"])),
+                        index=list(set(df["Country"])).index("Turkey"),
+                    )
+                    st.write(f"You have chosen {country}")
                 if st.button("Remove filters"):
                     d_type = None
                     country = None
@@ -231,7 +263,7 @@ if authentication_status:
                     "Please choose a year to see which countries had the highest disaster related mortality for the year. Please note that if you hower over bars in the barplot you will see some useful information in the tooltip that will appear."
                 )
                 col1, col2 = st.columns(2)
-                year = st.slider("Please choose a year", 2000, 2023, 2010)
+                year = st.slider("Please choose a year", 2000, 2023, 2023)
                 df2 = df[df["Year"] == year]
                 # c = alt.Chart(df2.sort_values(by=['Total Deaths'], ascending = False)).mark_bar().encode(y = alt.Y("Region:N", sort = alt.EncodingSortField(field='Region', op = 'sum', order = 'ascending')), x = alt.X("Total Deaths", sort = '-x'))
                 c = (
@@ -258,14 +290,14 @@ if authentication_status:
                     )
                 )
                 st.altair_chart(c, use_container_width=True)
-            if username in user_groups.get("admin"):
+            if username in user_groups.get("admin") or authorization_demo is False:
 
                 ################################################################################################
                 # Map
                 ################################################################################################
 
                 with map:
-                    year_map = st.slider("Please choose a year:", 2000, 2023, 2010)
+                    year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
 
                     ## Convert pandas dataframe to Arrow table
                     # table = pa.Table.from_pandas(merged_data)
