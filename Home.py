@@ -16,12 +16,14 @@ import pathlib
 import openpyxl
 import altair as alt
 from gensim import corpora
+from geopy.geocoders import Nominatim
 import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
 import pandas as pd
 from nltkmodules import *
 import altair as alt
+import folium
 
 # import wordcloud
 from wordcloud import WordCloud, STOPWORDS
@@ -134,7 +136,7 @@ if authentication_status == True or authorization_demo is False:
         def fetch_and_clean_data():
             # URL of the raw CSV file on GitHub
             disaster_data_path = pathlib.Path(
-                os.getcwd(), "2000-2023 disaster around the world.xlsx"
+                os.getcwd(), "/data/2000-2023 disaster around the world.xlsx"
             )
             df = pd.read_excel(disaster_data_path, header=6, engine="openpyxl")
             df["Total Damages $$$"] = df["Total Damages, Adjusted ('000 US$)"]
@@ -261,7 +263,7 @@ if authentication_status == True or authorization_demo is False:
                     "Please choose a year to see which countries had the highest disaster related mortality for the year. Please note that if you hower over bars in the barplot you will see some useful information in the tooltip that will appear."
                 )
                 col1, col2 = st.columns(2)
-                year = st.slider("Please choose a year", 2000, 2023, 2010)
+                year = st.slider("Please choose a year", 2000, 2023, 2023)
                 df2 = df[df["Year"] == year]
                 # c = alt.Chart(df2.sort_values(by=['Total Deaths'], ascending = False)).mark_bar().encode(y = alt.Y("Region:N", sort = alt.EncodingSortField(field='Region', op = 'sum', order = 'ascending')), x = alt.X("Total Deaths", sort = '-x'))
                 c = (
@@ -295,7 +297,7 @@ if authentication_status == True or authorization_demo is False:
                 ################################################################################################
 
                 with map:
-                    year_map = st.slider("Please choose a year:", 2000, 2023, 2010)
+                    year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
 
                     ## Convert pandas dataframe to Arrow table
                     # table = pa.Table.from_pandas(merged_data)
