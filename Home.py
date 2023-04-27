@@ -16,7 +16,6 @@ import pathlib
 import openpyxl
 import altair as alt
 from gensim import corpora
-from geopy.geocoders import Nominatim
 import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
