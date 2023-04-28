@@ -25,7 +25,7 @@ import streamlit_authenticator as stauth
 import pandas as pd
 from nltkmodules import *
 import altair as alt
-import folium
+#import folium
 
 # import wordcloud
 from wordcloud import WordCloud, STOPWORDS
