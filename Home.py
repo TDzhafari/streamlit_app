@@ -25,7 +25,8 @@ import streamlit_authenticator as stauth
 import pandas as pd
 from nltkmodules import *
 import altair as alt
-#import folium
+
+# import folium
 
 # import wordcloud
 from wordcloud import WordCloud, STOPWORDS
@@ -129,7 +130,7 @@ if authentication_status == True or authorization_demo is False:
                 os.getcwd(), "data/2000-2023 disaster around the world.xlsx"
             )
             countries_conv_data_path = pathlib.Path(
-                os.getcwd(), "data/country_loc_data"
+                os.getcwd(), "data/country_loc_data.csv"
             )
 
             # Data with countries and their long, lat. For details see "country_location_notebook.ipynb"
@@ -309,24 +310,6 @@ if authentication_status == True or authorization_demo is False:
 
                 with map:
                     year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
-
-                    # first I need to generate lat and long for countries in the df
-                    geolocator = Nominatim(user_agent="streamilt_map_disasters")
-
-                    # geopy library indicates risk of 429 error. So I'll generate a dict
-                    country_to_lat_lang = {}
-                    list_of_countries = list(df["Country"].unique())
-
-                    location = geolocator.geocode(list_of_countries[0])
-
-                    for country in list_of_countries:
-                        country_to_lat_lang[country] = (
-                            geolocator.geocode(country).latitude,
-                            geolocator.geocode(country).longitude,
-                        )
-                        st.text(
-                            f"{country_to_lat_lang.get(country)} of {country}, total countries is {len(list_of_countries)}"
-                        )
 
                 with tab5:
                     st.write(
