@@ -16,6 +16,9 @@ import pathlib
 import openpyxl
 import altair as alt
 from gensim import corpora
+from functools import partial
+from geopy.geocoders import Nominatim
+from geopy.extra.rate_limiter import RateLimiter
 import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
@@ -33,18 +36,6 @@ from nltk.corpus import stopwords
 # for "forgot password" and other authorization features
 # https://docs.streamlit.io/library/get-started/multipage-apps
 # for multipage setup
-
-
-# st.write('Streamlit day 1 dsba5122')
-# st.title('this is the app title')
-# st.markdown('this is the header')
-# st.subheader('this is the subheader')
-# st.caption('this is the caption')
-# st.code('x=2020')
-# st.latex(r''' a+a r^1+A r^2 r^3 ''')
-
-# st.image("norm.jpg")
-# st.audio("fight_song.mp3")
 
 ################################################################################################
 # Authentication and initial page setup
@@ -128,7 +119,7 @@ if authentication_status == True or authorization_demo is False:
     if demo_type_name == "Disasters":
         st.title("Disasters 2000-2023")
         st.subheader(
-            "The data has been collected from EM-DAT The International Disaster Database Centre for Research on THe Epidemiology of Disasters (CRED)"
+            "The data has been collected from EM-DAT The International Disaster Database Centre for Research on The Epidemiology of Disasters (CRED)"
         )
 
         @st.cache_data
@@ -298,57 +289,23 @@ if authentication_status == True or authorization_demo is False:
                 with map:
                     year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
 
-                    ## Convert pandas dataframe to Arrow table
-                    # table = pa.Table.from_pandas(merged_data)
+                    # first I need to generate lat and long for countries in the df
+                    geolocator = Nominatim(user_agent="streamilt_map_disasters")
 
-                    ## Write Arrow table to Feather format
-                    # feather.write_feather(table, 'merged_data.feather')
+                    # geopy library indicates risk of 429 error. So I'll generate a dict
+                    country_to_lat_lang = {}
+                    list_of_countries = list(df["Country"].unique())
 
-                    ## Read Feather file into Arrow table
-                    # table = feather.read_feather('merged_data.feather')
+                    location = geolocator.geocode(list_of_countries[0])
 
-                    ## Convert Arrow table to pandas dataframe
-                    # merged_data = table.to_pandas()
-
-                    ## Create a heatmap with a tooltip
-                    # heatmap = alt.Chart(merged_data).mark_geoshape().encode(
-                    #    color=alt.Color('Total Deaths:Q', scale=alt.Scale(scheme='reds')),
-                    #    #tooltip=[
-                    #    #    alt.Tooltip('name:N', title='Country'),
-                    #    #    alt.Tooltip('Total Deaths:Q', title='Total Deaths', format=',')
-                    #    #]
-                    # ).properties(
-                    #    width=600,
-                    #    height=400,
-                    #    title='Total Deaths by Country'
-                    # )
-
-                    ## Add world map outlines
-                    # world_outline = alt.Chart(world_map).mark_geoshape(stroke='white', strokeWidth=0.5).encode(
-                    #    color=alt.value('transparent')
-                    # ).properties(
-                    #    width=600,
-                    #    height=400,
-                    # )
-
-                    ## Combine the heatmap and world map outlines
-                    # map_chart = world_outline + heatmap
-
-                    ## Display the chart in Streamlit
-
-                    # countries = alt.topo_feature(df2, "Country")
-                    # source = df2[(df2['Year'] == year)]
-
-                    # base = alt.Chart(source).mark_geoshape(
-                    #    fill='#666666',
-                    #    stroke='white'
-                    # ).properties(
-                    #    width=300,
-                    #    height=180
-                    # )
-
-                    # projections = 'orthographic'
-                    # st.altair_chart(base.projections.properties(title = projections))
+                    for country in list_of_countries:
+                        country_to_lat_lang[country] = (
+                            geolocator.geocode(country).latitude,
+                            geolocator.geocode(country).longitude,
+                        )
+                        st.text(
+                            f"{country_to_lat_lang.get(country)} of {country}, total countries is {len(list_of_countries)}"
+                        )
 
                 with tab5:
                     st.write(
