@@ -128,8 +128,29 @@ if authentication_status == True or authorization_demo is False:
             disaster_data_path = pathlib.Path(
                 os.getcwd(), "data/2000-2023 disaster around the world.xlsx"
             )
+            countries_conv_data_path = pathlib.Path(
+                os.getcwd(), "data/country_loc_data"
+            )
+
+            # Data with countries and their long, lat. For details see "country_location_notebook.ipynb"
+            conv_df = pd.read_csv(countries_conv_data_path)
+
+            # Read main dataset
             df = pd.read_excel(disaster_data_path, header=6, engine="openpyxl")
+
+            # Cleaning
             df["Total Damages $$$"] = df["Total Damages, Adjusted ('000 US$)"]
+
+            country_names_to_modify = {
+                "Virgin Island (U.S)": "United States of America (the)",
+                "Palestine, State of": "Palestine",
+                "Taiwan (Province of China)": "Taiwan",
+            }
+
+            # modify these 3 countries and then join the dataframes.
+            #
+            #
+            # df['Country'] = df['Country'].apply(lambda x: x = country_names_to_modify.get(x) if x in country_names_to_modify.keys())
 
             # Download GeoJSON file of world map
             world_map_url = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json"
