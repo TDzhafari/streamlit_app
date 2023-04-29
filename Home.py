@@ -13,7 +13,6 @@ from collections import Counter
 import pyarrow as pa
 import pyarrow.feather as feather
 import pathlib
-import openpyxl
 import altair as alt
 from gensim import corpora
 from functools import partial
@@ -22,9 +21,11 @@ from geopy.extra.rate_limiter import RateLimiter
 import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
+from streamlit_folium import st_folium
 import pandas as pd
 from nltkmodules import *
 import altair as alt
+import folium
 
 # import folium
 
@@ -148,39 +149,21 @@ if authentication_status == True or authorization_demo is False:
                 "Taiwan (Province of China)": "Taiwan",
             }
 
-            # modify these 3 countries and then join the dataframes.
-            #
-            #
-            # df['Country'] = df['Country'].apply(lambda x: x = country_names_to_modify.get(x) if x in country_names_to_modify.keys())
+            df["Country"] = df["Country"].replace(country_names_to_modify)
 
-            # Download GeoJSON file of world map
-            world_map_url = "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json"
-            world_map = alt.topo_feature(world_map_url, "countries")
+            df["Total Deaths"] = df["Total Deaths"].fillna(0)
 
-            # Aggregate the data by country and region
-            df_m = df.groupby(["Country", "Region"]).sum().reset_index()
+            # merged_data = world_data.merge(df_m, left_on="name", right_on="Country")
+            df = pd.merge(df, conv_df, on="Country", how="left")
 
-            # Join the data with the GeoJSON file based on the "Country" field
-            world_data = gpd.read_file(world_map_url)
-            # df_map = world_data.merge(df_m, left_on='name', right_on='Country')
-
-            merged_data = world_data.merge(df_m, left_on="name", right_on="Country")
-
-            # Convert geopandas dataframe to pandas dataframe
-            merged_data = pd.DataFrame(merged_data)
-
-            return df, merged_data, world_map
+            return df, conv_df
 
         ################################################################################################
         # Interactive dashboards and additional functionality
         ################################################################################################
 
         if authentication_status or authorization_demo is False:
-            # disease = st.selectbox('select a disease', set(my_df['Dim2']))
-            # if not disease:
-            #    AgGrid(my_df)
-            # else:
-            #    AgGrid(my_df[my_df['Dim2'] == disease])
+
             if username in user_groups.get("admin") or authorization_demo is False:
                 source, line_plot, box_plot, map, tab5 = st.tabs(
                     ["Source", "Line Plot", "Box Plot", "Map", "Placeholder"]
@@ -190,11 +173,8 @@ if authentication_status == True or authorization_demo is False:
                     ["Source", "Line Plot", "Box Plot"]
                 )
             with source:
-                # expander = st.expander("How this works?")
-                # expander.write(
-                #     "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
-                # )
-                df, merged_data, world_map = fetch_and_clean_data()
+
+                df, conv_df = fetch_and_clean_data()
                 gb = GridOptionsBuilder.from_dataframe(df)
                 # gb.configure_pagination(paginationAutoPageSize = True)
                 gb.configure_side_bar()
@@ -223,21 +203,9 @@ if authentication_status == True or authorization_demo is False:
             ################################################################################################
 
             with line_plot:
-                # expander = st.expander("How this works?")
-                # expander.write(
-                #     "Please choose a disaster type and a country you would like learn more about. The line plot will show you the number of people affected by chosen type of disaster in a country from 2000 to 2023."
-                # )
+
                 col1, col2 = st.columns(2)
                 with col1:
-
-                    # d_type = ''
-                    # country = ''
-
-                    # # default filters
-                    # if d_type == "":
-                    #     d_type = "Earthquake"
-                    # if country == "":
-                    #     country = "Turkey"
 
                     d_type = st.multiselect(
                         "select a disaster type",
@@ -310,6 +278,40 @@ if authentication_status == True or authorization_demo is False:
 
                 with map:
                     year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
+                    url = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
+                    country_shapes = f"{url}/world-countries.json"
+                    map = folium.Map(
+                        location=conv_df[conv_df["Country"] == "Turkey"][
+                            ["latitude", "longitude"]
+                        ],
+                        zoom_start=2,
+                        scrollWheelZoom=False,
+                        tiles="CartoDB positron",
+                    )
+
+                    grouped_df = (
+                        df[df["Year"] == year_map][
+                            ["Year", "Country", "latitude", "longitude", "Total Deaths"]
+                        ]
+                        .groupby(["Year", "Country", "latitude", "longitude"])
+                        .agg("sum")
+                    )
+
+                    grouped_df = grouped_df.reset_index()
+
+                    choropleth = folium.Choropleth(
+                        geo_data=country_shapes,
+                        data=grouped_df,
+                        columns=["Country", "Total Deaths"],
+                        key_on="feature.properties.name",
+                        highlight=True,
+                        fill_opacity=0.3,
+                        line_opacity=0.2,
+                        legend_name="Data",
+                        fill_color="OrRd",
+                    ).add_to(map)
+                    # grouped_df = grouped_df.index()
+                    st_map = st_folium(map, width=900, height=600)
 
                 with tab5:
                     st.write(
