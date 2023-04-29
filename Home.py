@@ -26,18 +26,9 @@ import pandas as pd
 from nltkmodules import *
 import altair as alt
 import folium
-
-# import folium
-
-# import wordcloud
 from wordcloud import WordCloud, STOPWORDS
 import nltk, os
 from nltk.corpus import stopwords
-
-# https://towardsdatascience.com/how-to-add-a-user-authentication-service-in-streamlit-a8b93bf02031
-# for "forgot password" and other authorization features
-# https://docs.streamlit.io/library/get-started/multipage-apps
-# for multipage setup
 
 ################################################################################################
 # Authentication and initial page setup
@@ -212,14 +203,12 @@ if authentication_status == True or authorization_demo is False:
                         list(set(df["Disaster Type"])),
                         default="Earthquake",
                     )
-                    st.write(f"You have chosen {d_type}")
                 with col2:
                     country = st.selectbox(
                         "select a country",
                         list(set(df["Country"])),
                         index=list(set(df["Country"])).index("Turkey"),
                     )
-                    st.write(f"You have chosen {country}")
                 if st.button("Remove filters"):
                     d_type = None
                     country = None
@@ -227,11 +216,7 @@ if authentication_status == True or authorization_demo is False:
                     df1 = df[
                         (df["Country"] == country) & df["Disaster Type"].isin(d_type)
                     ]
-                    st.line_chart(
-                        df1,
-                        x="Year",
-                        y="Total Affected",
-                    )
+                    st.line_chart(df1, x="Year", y="Total Affected")
 
             ################################################################################################
             # Box plot
@@ -245,7 +230,6 @@ if authentication_status == True or authorization_demo is False:
                 col1, col2 = st.columns(2)
                 year = st.slider("Please choose a year", 2000, 2023, 2023)
                 df2 = df[df["Year"] == year]
-                # c = alt.Chart(df2.sort_values(by=['Total Deaths'], ascending = False)).mark_bar().encode(y = alt.Y("Region:N", sort = alt.EncodingSortField(field='Region', op = 'sum', order = 'ascending')), x = alt.X("Total Deaths", sort = '-x'))
                 c = (
                     alt.Chart(df2.sort_values(by=["Total Deaths"], ascending=False))
                     .mark_bar()
@@ -280,6 +264,7 @@ if authentication_status == True or authorization_demo is False:
                     year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
                     url = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
                     country_shapes = f"{url}/world-countries.json"
+
                     map = folium.Map(
                         location=conv_df[conv_df["Country"] == "Turkey"][
                             ["latitude", "longitude"]
@@ -298,7 +283,7 @@ if authentication_status == True or authorization_demo is False:
                     )
 
                     grouped_df = grouped_df.reset_index()
-
+                    st.write(grouped_df)
                     choropleth = folium.Choropleth(
                         geo_data=country_shapes,
                         data=grouped_df,
@@ -311,7 +296,7 @@ if authentication_status == True or authorization_demo is False:
                         fill_color="OrRd",
                     ).add_to(map)
                     # grouped_df = grouped_df.index()
-                    st_map = st_folium(map, width=900, height=600)
+                    st_map = st_folium(map, width=650, height=500)
 
                 with tab5:
                     st.write(
@@ -329,24 +314,14 @@ if authentication_status == True or authorization_demo is False:
                     st.image(
                         "https://www.speakeasy-news.com/wp-content/uploads/2020/04/SN_hopper_home02.jpg"
                     )
-        # if authentication_status and username in user_groups.get('group1'):
-
-        #     uploaded_file = st.file_uploader(
-        #         label='Reconciled Datadump',
-        #         type='xlsx',
-        #         help='Please upload Datadump here. The file will be checked for filename, extension, column formats etc. max weight = 200mb'
-        #     )
-
-        # st.dataframe(my_df[my_df['Dim2'] == disease])
-        # print((my_df.head().to_string()))
 
     elif demo_type_name == "NLP":
         st.title("Shakespeare Demo")
 
         st.markdown(
             """
-    # Analyzing Shakespeare Texts
-    """
+            # Analyzing Shakespeare Texts
+            """
         )
 
         # Create a dictionary (not a list)
