@@ -156,8 +156,8 @@ if authentication_status == True or authorization_demo is False:
         if authentication_status or authorization_demo is False:
 
             if username in user_groups.get("admin") or authorization_demo is False:
-                source, line_plot, box_plot, map, tab5 = st.tabs(
-                    ["Source", "Line Plot", "Box Plot", "Map", "Placeholder"]
+                source, line_plot, box_plot, map = st.tabs(
+                    ["Source", "Line Plot", "Box Plot", "Map"]
                 )
             else:
                 source, line_plot, box_plot = st.tabs(
@@ -283,7 +283,6 @@ if authentication_status == True or authorization_demo is False:
                     )
 
                     grouped_df = grouped_df.reset_index()
-                    st.write(grouped_df)
                     choropleth = folium.Choropleth(
                         geo_data=country_shapes,
                         data=grouped_df,
@@ -295,25 +294,42 @@ if authentication_status == True or authorization_demo is False:
                         legend_name="Data",
                         fill_color="OrRd",
                     ).add_to(map)
+
+                    df = df.set_index("Country")
+
+                    for feature in choropleth.geojson.data["features"]:
+                        country_name = feature["properties"]["name"]
+                        feature["properties"]["total deaths"] = "Total Deaths: " + str(
+                            df.loc[country_name, "Total Deaths"]
+                            .groupby("Country")
+                            .sum()[0]
+                            if country_name in list(df.index)
+                            else "N/A"
+                        )
+
+                    choropleth.geojson.add_child(
+                        folium.features.GeoJsonTooltip(["name", "total deaths"])
+                    )
+
                     # grouped_df = grouped_df.index()
                     st_map = st_folium(map, width=650, height=500)
 
-                with tab5:
-                    st.write(
-                        "There will be something cool and creative below. Meanwhile enjoy some art by Edward Hopper."
-                    )
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        st.image(
-                            "https://media.tate.org.uk/aztate-prd-ew-dg-wgtail-st1-ctr-data/images/edward_hopper_automat.width-600.jpg"
-                        )
-                    with col2:
-                        st.image(
-                            "https://collectionapi.metmuseum.org/api/collection/v1/iiif/488730/1004971/restricted"
-                        )
-                    st.image(
-                        "https://www.speakeasy-news.com/wp-content/uploads/2020/04/SN_hopper_home02.jpg"
-                    )
+                # with tab5:
+                #     st.write(
+                #         "There will be something cool and creative below. Meanwhile enjoy some art by Edward Hopper."
+                #     )
+                #     col1, col2 = st.columns(2)
+                #     with col1:
+                #         st.image(
+                #             "https://media.tate.org.uk/aztate-prd-ew-dg-wgtail-st1-ctr-data/images/edward_hopper_automat.width-600.jpg"
+                #         )
+                #     with col2:
+                #         st.image(
+                #             "https://collectionapi.metmuseum.org/api/collection/v1/iiif/488730/1004971/restricted"
+                #         )
+                #     st.image(
+                #         "https://www.speakeasy-news.com/wp-content/uploads/2020/04/SN_hopper_home02.jpg"
+                #     )
 
     elif demo_type_name == "NLP":
         st.title("Shakespeare Demo")
@@ -375,6 +391,15 @@ if authentication_status == True or authorization_demo is False:
                 stop_words.update(
                     [
                         "us",
+                        ",",
+                        ".",
+                        ";",
+                        "?",
+                        "!",
+                        "'d",
+                        "[",
+                        "]",
+                        ":",
                         "one",
                         "though",
                         "will",
