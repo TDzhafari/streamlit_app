@@ -1,7 +1,7 @@
 # streamlit_app
 
 To view the live application please use the following link:
-https://gagarintim-streamlit-app-home-4gd9sj.streamlit.app/
+https://disasters.streamlit.app/
 
 To run locally please follow the following steps:
 
@@ -18,7 +18,5 @@ Expected updates:
 
 The app will have more demos that will include one of the following:
 
-1) A demo for a classification model
-2) A prediction demo
-3) Forecasting demo
-4) Clustering demo
+1) restructuring tabs to put all visualization on one tab and "source" on separate
+2) new demos
