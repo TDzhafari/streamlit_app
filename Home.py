@@ -21,7 +21,7 @@ from geopy.extra.rate_limiter import RateLimiter
 import streamlit as st
 from wordcloud import WordCloud, STOPWORDS
 import streamlit_authenticator as stauth
-from streamlit_folium import st_folium
+from streamlit_folium import folium_static
 import pandas as pd
 from nltkmodules import *
 import altair as alt
@@ -312,7 +312,7 @@ if authentication_status == True or authorization_demo is False:
                     )
 
                     # grouped_df = grouped_df.index()
-                    st_map = st_folium(map, width=650, height=500)
+                    st_map = folium_static(map)
 
                 # with tab5:
                 #     st.write(
