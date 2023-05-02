@@ -114,6 +114,10 @@ if authentication_status == True or authorization_demo is False:
         st.subheader(
             "The data has been collected from EM-DAT The International Disaster Database Centre for Research on The Epidemiology of Disasters (CRED)"
         )
+        
+        st.markdown(
+            "[Tableau Dashboard](https://public.tableau.com/app/profile/timur.dzhafari/viz/EarthquakesinTurkeyvsdisasterssince2000/Dashboard1)"
+        )
 
         @st.cache_data
         def fetch_and_clean_data():
