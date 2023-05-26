@@ -27,7 +27,8 @@ from nltkmodules import *
 import altair as alt
 import folium
 from wordcloud import WordCloud, STOPWORDS
-import nltk, os
+import nltk
+import os
 from nltk.corpus import stopwords
 
 ################################################################################################
@@ -65,7 +66,8 @@ if authorization_demo is True:
     if "key" not in st.session_state:
         st.session_state["key"] = "value"
 
-    name, authentication_status, username = authenticator.login("login", "main")
+    name, authentication_status, username = authenticator.login(
+        "login", "main")
 
     if authentication_status:
         authenticator.logout("Logout", "sidebar")
@@ -80,8 +82,10 @@ if authorization_demo is True:
         # )
         promise = st.checkbox(label="I promise, I can keep a secret!")
         if promise:
-            expander = st.expander("For guest access credentials please click here.")
-            expander.write("login: 'jdoe', password: 'abc1' - just don't tell anyone")
+            expander = st.expander(
+                "For guest access credentials please click here.")
+            expander.write(
+                "login: 'jdoe', password: 'abc1' - just don't tell anyone")
     # st.write(f'Your authentication status is {authentication_status}')
 
     if authentication_status:
@@ -114,7 +118,7 @@ if authentication_status == True or authorization_demo is False:
         st.subheader(
             "The data has been collected from EM-DAT The International Disaster Database Centre for Research on The Epidemiology of Disasters (CRED)"
         )
-        
+
         st.markdown(
             "[Tableau Dashboard](https://public.tableau.com/app/profile/timur.dzhafari/viz/EarthquakesinTurkeyvsdisasterssince2000/Dashboard1)"
         )
@@ -160,12 +164,12 @@ if authentication_status == True or authorization_demo is False:
         if authentication_status or authorization_demo is False:
 
             if username in user_groups.get("admin") or authorization_demo is False:
-                source, line_plot, box_plot, map = st.tabs(
-                    ["Source", "Line Plot", "Box Plot", "Map"]
+                source, visualizations = st.tabs(
+                    ["Source", "Visualizations"]
                 )
             else:
-                source, line_plot, box_plot = st.tabs(
-                    ["Source", "Line Plot", "Box Plot"]
+                source, visualizations = st.tabs(
+                    ["Source", "Visualizations"]
                 )
             with source:
 
@@ -197,7 +201,7 @@ if authentication_status == True or authorization_demo is False:
             # Line plot tab
             ################################################################################################
 
-            with line_plot:
+            with visualizations:
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -226,114 +230,114 @@ if authentication_status == True or authorization_demo is False:
             # Box plot
             ################################################################################################
 
-            with box_plot:
-                expander = st.expander("How this works?")
-                expander.write(
-                    "Please choose a year to see which countries had the highest disaster related mortality for the year. Please note that if you hower over bars in the barplot you will see some useful information in the tooltip that will appear."
-                )
-                col1, col2 = st.columns(2)
-                year = st.slider("Please choose a year", 2000, 2023, 2023)
-                df2 = df[df["Year"] == year]
-                c = (
-                    alt.Chart(df2.sort_values(by=["Total Deaths"], ascending=False))
-                    .mark_bar()
-                    .encode(
-                        y=alt.Y(
-                            "Region:N",
-                            sort=alt.EncodingSortField(
-                                field="Total Deaths", order="descending"
-                            ),
-                            axis=alt.Axis(title="Region"),
+            expander = st.expander("How this works?")
+            expander.write(
+                "Please choose a year to see which countries had the highest disaster related mortality for the year. Please note that if you hower over bars in the barplot you will see some useful information in the tooltip that will appear."
+            )
+            col1, col2 = st.columns(2)
+            year = st.slider("Please choose a year", 2000, 2023, 2023)
+            df2 = df[df["Year"] == year]
+            c = (
+                alt.Chart(df2.sort_values(
+                    by=["Total Deaths"], ascending=False))
+                .mark_bar()
+                .encode(
+                    y=alt.Y(
+                        "Region:N",
+                        sort=alt.EncodingSortField(
+                            field="Total Deaths", order="descending"
                         ),
-                        x=alt.X(
-                            "Total Deaths",
-                            sort="-x",
-                            axis=alt.Axis(title="Total Deaths"),
-                        ),
-                        tooltip=[
-                            alt.Tooltip("Country:N", title="Country"),
-                            alt.Tooltip("Total Deaths:Q", title="Total Deaths"),
-                            alt.Tooltip("Total Affected:Q", title="Total Affected"),
-                        ],
-                    )
+                        axis=alt.Axis(title="Region"),
+                    ),
+                    x=alt.X(
+                        "Total Deaths",
+                        sort="-x",
+                        axis=alt.Axis(title="Total Deaths"),
+                    ),
+                    tooltip=[
+                        alt.Tooltip("Country:N", title="Country"),
+                        alt.Tooltip("Total Deaths:Q", title="Total Deaths"),
+                        alt.Tooltip("Total Affected:Q",
+                                    title="Total Affected"),
+                    ],
                 )
-                st.altair_chart(c, use_container_width=True)
-            if username in user_groups.get("admin") or authorization_demo is False:
+            )
+            st.altair_chart(c, use_container_width=True)
 
-                ################################################################################################
-                # Map
-                ################################################################################################
+            ################################################################################################
+            # Map
+            ################################################################################################
+            year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
+            url = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
+            country_shapes = f"{url}/world-countries.json"
 
-                with map:
-                    year_map = st.slider("Please choose a year:", 2000, 2023, 2023)
-                    url = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data"
-                    country_shapes = f"{url}/world-countries.json"
+            map = folium.Map(
+                location=conv_df[conv_df["Country"] == "Turkey"][
+                    ["latitude", "longitude"]
+                ],
+                zoom_start=2,
+                scrollWheelZoom=False,
+                tiles="CartoDB positron",
+            )
 
-                    map = folium.Map(
-                        location=conv_df[conv_df["Country"] == "Turkey"][
-                            ["latitude", "longitude"]
-                        ],
-                        zoom_start=2,
-                        scrollWheelZoom=False,
-                        tiles="CartoDB positron",
-                    )
+            grouped_df = (
+                df[df["Year"] == year_map][
+                    ["Year", "Country", "latitude", "longitude", "Total Deaths"]
+                ]
+                .groupby(["Year", "Country", "latitude", "longitude"])
+                .agg("sum")
+            )
 
-                    grouped_df = (
-                        df[df["Year"] == year_map][
-                            ["Year", "Country", "latitude", "longitude", "Total Deaths"]
-                        ]
-                        .groupby(["Year", "Country", "latitude", "longitude"])
-                        .agg("sum")
-                    )
+            grouped_df = grouped_df.reset_index()
+            choropleth = folium.Choropleth(
+                geo_data=country_shapes,
+                data=grouped_df,
+                columns=["Country", "Total Deaths"],
+                key_on="feature.properties.name",
+                highlight=True,
+                fill_opacity=0.3,
+                line_opacity=0.2,
+                legend_name="Data",
+                fill_color="OrRd",
+            ).add_to(map)
 
-                    grouped_df = grouped_df.reset_index()
-                    choropleth = folium.Choropleth(
-                        geo_data=country_shapes,
-                        data=grouped_df,
-                        columns=["Country", "Total Deaths"],
-                        key_on="feature.properties.name",
-                        highlight=True,
-                        fill_opacity=0.3,
-                        line_opacity=0.2,
-                        legend_name="Data",
-                        fill_color="OrRd",
-                    ).add_to(map)
+            df = df.set_index("Country")
 
-                    df = df.set_index("Country")
+            for feature in choropleth.geojson.data["features"]:
+                country_name = feature["properties"]["name"]
+                feature["properties"]["total deaths"] = "Total Deaths: " + str(
+                    df.loc[country_name, "Total Deaths"]
+                    .groupby("Country")
+                    .sum()[0]
+                    if country_name in list(df.index)
+                    else "N/A"
+                )
 
-                    for feature in choropleth.geojson.data["features"]:
-                        country_name = feature["properties"]["name"]
-                        feature["properties"]["total deaths"] = "Total Deaths: " + str(
-                            df.loc[country_name, "Total Deaths"]
-                            .groupby("Country")
-                            .sum()[0]
-                            if country_name in list(df.index)
-                            else "N/A"
-                        )
+            choropleth.geojson.add_child(
+                folium.features.GeoJsonTooltip(["name", "total deaths"])
+            )
 
-                    choropleth.geojson.add_child(
-                        folium.features.GeoJsonTooltip(["name", "total deaths"])
-                    )
+            # grouped_df = grouped_df.index()
+            st_map = folium_static(map)
 
-                    # grouped_df = grouped_df.index()
-                    st_map = folium_static(map)
+            # with map:
 
-                # with tab5:
-                #     st.write(
-                #         "There will be something cool and creative below. Meanwhile enjoy some art by Edward Hopper."
-                #     )
-                #     col1, col2 = st.columns(2)
-                #     with col1:
-                #         st.image(
-                #             "https://media.tate.org.uk/aztate-prd-ew-dg-wgtail-st1-ctr-data/images/edward_hopper_automat.width-600.jpg"
-                #         )
-                #     with col2:
-                #         st.image(
-                #             "https://collectionapi.metmuseum.org/api/collection/v1/iiif/488730/1004971/restricted"
-                #         )
-                #     st.image(
-                #         "https://www.speakeasy-news.com/wp-content/uploads/2020/04/SN_hopper_home02.jpg"
-                #     )
+            # with tab5:
+            #     st.write(
+            #         "There will be something cool and creative below. Meanwhile enjoy some art by Edward Hopper."
+            #     )
+            #     col1, col2 = st.columns(2)
+            #     with col1:
+            #         st.image(
+            #             "https://media.tate.org.uk/aztate-prd-ew-dg-wgtail-st1-ctr-data/images/edward_hopper_automat.width-600.jpg"
+            #         )
+            #     with col2:
+            #         st.image(
+            #             "https://collectionapi.metmuseum.org/api/collection/v1/iiif/488730/1004971/restricted"
+            #         )
+            #     st.image(
+            #         "https://www.speakeasy-news.com/wp-content/uploads/2020/04/SN_hopper_home02.jpg"
+            #     )
 
     elif demo_type_name == "NLP":
         st.title("Shakespeare Demo")
@@ -371,18 +375,21 @@ if authentication_status == True or authorization_demo is False:
             "Random State", min_value=20, max_value=100, value=50, step=1
         )
 
-        remove_stop_words = st.sidebar.checkbox("Remove Stop Words?", value=True)
+        remove_stop_words = st.sidebar.checkbox(
+            "Remove Stop Words?", value=True)
 
         st.sidebar.header("Word Count Settings")
 
         min_word_cnt = st.sidebar.slider(
             "Minimum count of words", min_value=5, max_value=100, value=30, step=1
         )
-        ## Select text files
+        # Select text files
         image = st.selectbox("Choose a text file", books.keys())
 
-        ## Get the value
+        # Get the value
         if image != " ":
+
+            source_text = books.get(image)
             image = books.get(image)
 
         if image != " ":
@@ -501,5 +508,5 @@ if authentication_status == True or authorization_demo is False:
 
         with tab3:
             if image != " ":
-                raw_text = open(image, "r").read().lower()
+                raw_text = open(image, "r").read()
                 st.write(raw_text)
