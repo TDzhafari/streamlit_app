@@ -6,6 +6,7 @@ import os
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import streamlit as st
+import branca.colormap as cm
 from wordcloud import WordCloud
 
 # import altair_saver
@@ -66,8 +67,7 @@ if authorization_demo is True:
     if "key" not in st.session_state:
         st.session_state["key"] = "value"
 
-    name, authentication_status, username = authenticator.login(
-        "login", "main")
+    name, authentication_status, username = authenticator.login("login", "main")
 
     if authentication_status:
         authenticator.logout("Logout", "sidebar")
@@ -82,10 +82,8 @@ if authorization_demo is True:
         # )
         promise = st.checkbox(label="I promise, I can keep a secret!")
         if promise:
-            expander = st.expander(
-                "For guest access credentials please click here.")
-            expander.write(
-                "login: 'jdoe', password: 'abc1' - just don't tell anyone")
+            expander = st.expander("For guest access credentials please click here.")
+            expander.write("login: 'jdoe', password: 'abc1' - just don't tell anyone")
     # st.write(f'Your authentication status is {authentication_status}')
 
     if authentication_status:
@@ -164,13 +162,9 @@ if authentication_status == True or authorization_demo is False:
         if authentication_status or authorization_demo is False:
 
             if username in user_groups.get("admin") or authorization_demo is False:
-                source, visualizations = st.tabs(
-                    ["Source", "Visualizations"]
-                )
+                source, visualizations = st.tabs(["Source", "Visualizations"])
             else:
-                source, visualizations = st.tabs(
-                    ["Source", "Visualizations"]
-                )
+                source, visualizations = st.tabs(["Source", "Visualizations"])
             with source:
 
                 df, conv_df = fetch_and_clean_data()
@@ -238,8 +232,7 @@ if authentication_status == True or authorization_demo is False:
             year = st.slider("Please choose a year", 2000, 2023, 2023)
             df2 = df[df["Year"] == year]
             c = (
-                alt.Chart(df2.sort_values(
-                    by=["Total Deaths"], ascending=False))
+                alt.Chart(df2.sort_values(by=["Total Deaths"], ascending=False))
                 .mark_bar()
                 .encode(
                     y=alt.Y(
@@ -257,8 +250,7 @@ if authentication_status == True or authorization_demo is False:
                     tooltip=[
                         alt.Tooltip("Country:N", title="Country"),
                         alt.Tooltip("Total Deaths:Q", title="Total Deaths"),
-                        alt.Tooltip("Total Affected:Q",
-                                    title="Total Affected"),
+                        alt.Tooltip("Total Affected:Q", title="Total Affected"),
                     ],
                 )
             )
@@ -280,6 +272,8 @@ if authentication_status == True or authorization_demo is False:
                 tiles="CartoDB positron",
             )
 
+            df["Total Deaths"] = df["Total Deaths"].fillna(0)
+
             grouped_df = (
                 df[df["Year"] == year_map][
                     ["Year", "Country", "latitude", "longitude", "Total Deaths"]
@@ -287,31 +281,48 @@ if authentication_status == True or authorization_demo is False:
                 .groupby(["Year", "Country", "latitude", "longitude"])
                 .agg("sum")
             )
-
+            color_scale = cm.LinearColormap(
+                colors=["white", "darkred"],
+                vmin=0,
+                vmax=grouped_df["Total Deaths"].max(),
+                index=[0, 1],
+            )
             grouped_df = grouped_df.reset_index()
             choropleth = folium.Choropleth(
                 geo_data=country_shapes,
+                name="choropleth",
                 data=grouped_df,
                 columns=["Country", "Total Deaths"],
                 key_on="feature.properties.name",
-                highlight=True,
-                fill_opacity=0.3,
-                line_opacity=0.2,
-                legend_name="Data",
-                fill_color="OrRd",
+                # highlight=True,
+                fill_color="Reds",
+                fill_opacity=0.4,
+                line_opacity=0.1,
+                legend_name="Total Deaths",
             ).add_to(map)
 
-            df = df.set_index("Country")
+            df = df.set_index(["Country", "Year"])
 
             for feature in choropleth.geojson.data["features"]:
                 country_name = feature["properties"]["name"]
-                feature["properties"]["total deaths"] = "Total Deaths: " + str(
-                    df.loc[country_name, "Total Deaths"]
-                    .groupby("Country")
-                    .sum()[0]
-                    if country_name in list(df.index)
-                    else "N/A"
-                )
+                try:
+                    if (country_name, year_map) in df.index:
+                        total_deaths = (
+                            df.loc[(country_name, year_map), "Total Deaths"]
+                            .groupby("Country")
+                            .sum()
+                            .values[0]
+                        )
+                    else:
+                        total_deaths = "No Data"
+                    feature["properties"]["total deaths"] = "Total Deaths: " + str(
+                        total_deaths
+                    )
+                except KeyError:
+                    total_deaths = "Error"
+                    feature["properties"]["total deaths"] = "Total Deaths: " + str(
+                        total_deaths
+                    )
 
             choropleth.geojson.add_child(
                 folium.features.GeoJsonTooltip(["name", "total deaths"])
@@ -375,8 +386,7 @@ if authentication_status == True or authorization_demo is False:
             "Random State", min_value=20, max_value=100, value=50, step=1
         )
 
-        remove_stop_words = st.sidebar.checkbox(
-            "Remove Stop Words?", value=True)
+        remove_stop_words = st.sidebar.checkbox("Remove Stop Words?", value=True)
 
         st.sidebar.header("Word Count Settings")
 
